@@ -7,7 +7,7 @@
 # pyglet imports
 from pyglet.gl import *
 from pyglet import window, clock, image
-from pyglet.window import key
+from pyglet.window import key, mouse
 
 # stadard lib imports
 from random import choice
@@ -114,7 +114,7 @@ controls_img = image.load('controls.png').texture
 
 show_help = True
 evolving = False
-painting = False
+drawing = False
 
 
 fps_limit = 20
@@ -152,19 +152,21 @@ win.on_key_press = on_key_press
 def on_mouse_press(x, y, button, modifiers):
     if x<11 or x>509 or y<11 or y>509: return
     global grid, painting
-    painting = True
-    grid[(y-10)/10][(x-10)/10] = (1,0)
+    drawing = True
+    clock.set_fps_limit(60)
+    grid[(y-10)/10][(x-10)/10] = (int(button==mouse.LEFT),0)
 win.on_mouse_press = on_mouse_press
 
 def on_mouse_release(x, y, button, modifiers):
     global painting
-    painting = False
+    drawing = False
+    clock.set_fps_limit(fps_limit)
 win.on_mouse_release = on_mouse_release
     
-def on_mouse_drag(x, y, dx, dy, buttons, modifiers):
+def on_mouse_drag(x, y, dx, dy, button, modifiers):
     if x<11 or x>509 or y<11 or y>509: return
     global grid
-    grid[(y-10)/10][(x-10)/10] = (1,0)
+    grid[(y-10)/10][(x-10)/10] = (int(button==mouse.LEFT),0)
 win.on_mouse_drag = on_mouse_drag
 
 
@@ -178,7 +180,10 @@ while not win.has_exit:
     dt = clock.tick()
     
     # set title framerate
-    win.set_caption('Game of Life 2d - evolutions per second: %s' % round(clock.get_fps()))
+    if drawing:
+        win.set_caption('Game of Life 2d - drawing')
+    else:
+        win.set_caption('Game of Life 2d - evolutions per second: %s' % round(clock.get_fps()))
 
     # clear
     glClear(GL_COLOR_BUFFER_BIT)
@@ -186,7 +191,7 @@ while not win.has_exit:
     
     draw_header()
     draw_arena()
-    if evolving and not painting and not show_help: evolve_grid()
+    if evolving and not drawing and not show_help: evolve_grid()
     draw_grid()
     if show_help: draw_help()
 
